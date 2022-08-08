@@ -1,0 +1,13 @@
+body {
+    height: 100vh;
+}
+
+.container {
+    height: auto;
+}
+
+.input.input-network {
+    cursor: default;
+    border: none;
+    background-color: white !important;
+}
