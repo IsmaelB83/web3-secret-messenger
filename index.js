@@ -45,18 +45,21 @@ addEventListeners();
 /**
  * Connect to web3 provider (either ganache or metamask)
  */
-async function connectProvider() {
+function connectProvider() {
     // Connect a the web3 provider
     if (typeof web3 !== 'undefined') {
         // Connection directly via metamask
         web3 = new Web3(window.ethereum);
         // Prepare UI
-        if (ethereum.isConnected())
-            connectedNetwork(await web3.eth.getAccounts(), await web3.eth.getChainId());
+        if (ethereum.isConnected()) {
+            web3.eth.getAccounts()
+            .then(accounts => web3.eth.getChainId().then(chainId => connectedNetwork(accounts, chainId)))
+            .catch(error => console.log(error));
+        }
     } else {
         // Connection directly to ganache
         web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:7545"));
-        connectedNetwork(await web3.eth.getAccounts())
+        web3.eth.getAccounts().then(accounts => connectedNetwork(accounts))
     }
 }
 
@@ -117,7 +120,7 @@ function addEventListeners() {
     buttonConnectMetamask.addEventListener('click', connectMetamaskEventHandler);
     buttonConnectGanache.addEventListener('click', connectGanacheEventHandler);
     buttonCheckSmartContract.addEventListener('click', checkSmartContract);
-    inputSCAddress.addEventListener('input', (e) => console.log(e.target.value))
+    inputSCAddress.addEventListener('input', (e) => {})
 }
 
 /**
@@ -126,15 +129,15 @@ function addEventListeners() {
  * @param {*} network
  */
 function connectedNetwork(accounts, network) {
-    web3.eth.defaultAccount = accounts[0].toLowerCase();
-    inputEOAddress.value = accounts[0].toLowerCase();
-    if (!network) 
-        labelCurrentNetwork.innerHTML = 'Ganache'
-    else 
-        labelCurrentNetwork.innerHTML = NETWORKS[network]   
-    buttonSendMessage.disabled = false;
-    buttonReloadMessages.disabled = false;
-    buttonCheckSmartContract.disabled = false;
+    if (accounts) {
+        web3.eth.defaultAccount = accounts[0].toLowerCase();
+        inputEOAddress.value = accounts[0].toLowerCase();
+        if (!network) 
+            labelCurrentNetwork.innerHTML = 'Ganache'
+        else 
+            labelCurrentNetwork.innerHTML = NETWORKS[network]   
+        buttonCheckSmartContract.disabled = false;   
+    }
 }
 
 /******************************************
@@ -177,14 +180,19 @@ async function connectMetamaskEventHandler() {
     web3 = new Web3(window.ethereum);
     ethereum.request({ method: 'eth_requestAccounts' })
     .then(accounts => web3.eth.getChainId().then(chainId => connectedNetwork(accounts, chainId)))
+    .catch(error => alert(error.message))
 }
 
 /**
  * Connect to the ganache via web3
  */
  async function connectGanacheEventHandler() {
-    web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
-    connectedNetwork(await web3.eth.getAccounts())
+     try {
+        web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
+        connectedNetwork(await web3.eth.getAccounts())         
+     } catch (error) {
+        alert(error.message)
+    }
 }
 
 /**
